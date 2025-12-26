@@ -1,0 +1,57 @@
+version: "3"
+
+vars:
+  CONFIG_COMMANDS: syncd.commands.yaml
+  CONFIG_MCP: syncd.mcp.yaml
+
+tasks:
+  build:
+    desc: Build syncd binary
+    cmds:
+      - go build -o bin/syncd ./cmd/syncd
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  validate:commands:
+    desc: Validate command allow/deny config
+    cmds:
+      - go run ./cmd/syncd -config {{.CONFIG_COMMANDS}} -validate
+
+  validate:mcp:
+    desc: Validate MCP allow/deny config
+    cmds:
+      - go run ./cmd/syncd -config {{.CONFIG_MCP}} -validate
+
+  dryrun:commands:
+    desc: Dry run command allow/deny sync
+    cmds:
+      - go run ./cmd/syncd -config {{.CONFIG_COMMANDS}} -once -dry-run
+
+  dryrun:mcp:
+    desc: Dry run MCP allow/deny sync
+    cmds:
+      - go run ./cmd/syncd -config {{.CONFIG_MCP}} -once -dry-run
+
+  release:dry-run:
+    desc: Build release artifacts locally (no GitHub release)
+    cmds:
+      - |
+        set -euo pipefail
+        VERSION="local"
+        mkdir -p dist
+        GOOS_LIST="linux darwin windows"
+        GOARCH_LIST="amd64 arm64"
+        for GOOS in $GOOS_LIST; do
+          for GOARCH in $GOARCH_LIST; do
+            EXT=""
+            if [ "$GOOS" = "windows" ]; then
+              EXT=".exe"
+            fi
+            OUT="dist/syncd_${VERSION}_${GOOS}_${GOARCH}${EXT}"
+            CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o "$OUT" ./cmd/syncd
+          done
+        done
+        (cd dist && sha256sum * > SHA256SUMS)

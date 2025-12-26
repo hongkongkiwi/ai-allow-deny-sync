@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Test
+        run: |
+          go install github.com/go-task/task/v3/cmd/task@latest
+          task test
+
+      - name: Build binaries
+        run: |
+          set -euo pipefail
+          VERSION=${GITHUB_REF_NAME}
+          mkdir -p dist
+          GOOS_LIST="linux darwin windows"
+          GOARCH_LIST="amd64 arm64"
+          for GOOS in $GOOS_LIST; do
+            for GOARCH in $GOARCH_LIST; do
+              EXT=""
+              if [ "$GOOS" = "windows" ]; then
+                EXT=".exe"
+              fi
+              OUT="dist/syncd_${VERSION}_${GOOS}_${GOARCH}${EXT}"
+              CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o "$OUT" ./cmd/syncd
+            done
+          done
+          (cd dist && sha256sum * > SHA256SUMS)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,64 @@
+# mode: union | authoritative
+mode: union
+# source: claude
+# sort defaults to true when omitted
+# sort: true
+
+clients:
+  - name: claude
+    format: json-object
+    allow_path: ~/.claude/settings.json
+    deny_path: ~/.claude/settings.json
+    allow_key: permissions.allow
+    deny_key: permissions.deny
+    missing_ok: true
+
+  - name: codex
+    format: codex-rules
+    allow_path: ~/.codex/rules/default.rules
+    deny_path: ~/.codex/rules/default.rules
+    missing_ok: true
+
+  - name: cursor
+    format: json-object
+    allow_path: ~/.cursor/cli-config.json
+    deny_path: ~/.cursor/cli-config.json
+    allow_key: permissions.allow
+    deny_key: permissions.deny
+    missing_ok: true
+
+  - name: roo-cline
+    format: json-object
+    allow_path: "~/Library/Application Support/Cursor/User/settings.json"
+    allow_key: roo-cline.allowedCommands
+    missing_ok: true
+
+  - name: vscode-copilot
+    format: json-bool-map
+    allow_path: "~/Library/Application Support/Code/User/settings.json"
+    allow_key: chat.tools.terminal.autoApprove
+    missing_ok: true
+
+  - name: kilocode
+    format: json-object
+    allow_path: ~/.kilocode/config.json
+    deny_path: ~/.kilocode/config.json
+    allow_key: autoApproval.execute.allowed
+    deny_key: autoApproval.execute.denied
+    missing_ok: true
+
+  - name: gemini
+    format: json-object
+    allow_path: ~/.gemini/settings.json
+    deny_path: ~/.gemini/settings.json
+    allow_key: coreTools
+    deny_key: excludeTools
+    missing_ok: true
+
+  - name: qwen
+    format: json-object
+    allow_path: ~/.qwen/settings.json
+    deny_path: ~/.qwen/settings.json
+    allow_key: mcp.allowed
+    deny_key: mcp.excluded
+    missing_ok: true
